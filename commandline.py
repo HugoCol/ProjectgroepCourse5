@@ -7,8 +7,8 @@ os.system('ls -l')
 os.system('pwd')
 time.sleep(2)
 
-os.chdir('/')
+os.chdir('/home/hugo/course5/programs/')
 os.system('pwd')
-# os.system('ls -l')
-os.system('muscle -in ./Desktop/Hemaglutininfamilie40.fasta -out '
-          './Desktop/musclealign40.fasta')
+os.system('ls -l')
+os.system('muscle -in ./Desktop/Hemaglutininfamilie40.fa -out '
+          './Desktop/muscleoutput40.afa')
