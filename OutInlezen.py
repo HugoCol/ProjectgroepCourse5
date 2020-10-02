@@ -116,6 +116,23 @@ Database:
         - ID PK
         - Naam (webscraper)
     """
+
+    add_entry_sequentie = ('INSERT INTO Sequentie '
+                           '(`ID`, `Seq`, `Accessiecode`)'
+                           ' VALUES(%s,%s,%s)')
+
+    add_entry_taxonomy = ('INSERT INTO Taxonomy '
+                          '(`ID`, `Naam` )'
+                          'VALUES(%s,%s)')
+
+    add_entry_Alignments = ('INSERT INTO Alignments '
+                            '(`ID`, `Iteratie`, `Alignment_file`)'
+                            'VALUES(%s,%s,%s)')
+
+    add_entry_GO = ('INSERT INTO GO'
+                    '(`ID`, `GO_terms`)'
+                    'VALUES(%s,%s)')
+
     conn = mysql.connector.connect(host=host, user=user, db=db,
                                    password=password)
     for row in table_in_list:
