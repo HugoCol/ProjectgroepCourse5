@@ -138,10 +138,7 @@ Database:
     for row in table_in_list:
         cursor = conn.cursor()
 
-        # zet hier je Mysql command
-        string2 = f"insert into lineage (id, name) values " \
-                  f"('{teller1}', " \
-                  f"'{datadic[i][11][countlin]}')"
+
 
         # voer de command uit
         cursor.execute(string2)
