@@ -1,3 +1,0 @@
-# ProjectgroepCourse5
-
-hoi
