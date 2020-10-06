@@ -2,6 +2,7 @@ import requests
 import re
 import time
 from sys import argv
+import pickle
 
 
 def get_acessionCodes(file):
@@ -20,8 +21,7 @@ def get_acessionCodes(file):
 
     print(codes)
 
-    url_id = "+".join(codes)
-    return url_id
+    return codes
 
 
 def esearch_history(url_id):
@@ -29,11 +29,14 @@ def esearch_history(url_id):
     :param url_id: string met accessiecodes uit de get_accessiecodes functie.
     :return: env, query
     """
+
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=protein&term={}&usehistory=y&api_key=7fef8992ebefa5ccc23e3d3a2425b9ed0109".format(
         url_id)
     print(url)
 
     r = requests.get(url)
+
+    print(r.text)
 
     # WebEnv key die teruglinkt naar de ESearch query.
     env = re.search("<WebEnv>(.*?)<\/WebEnv>", r.text).group(1)
@@ -78,31 +81,72 @@ def fasta_writer(r, file_name):
     :param file_name: door de gebruiker ingevoerde filename
     :return: geen
     """
-    file = open(file_name, "w")
+    file = open(file_name, "a")
 
     file.write(r.text)
 
     file.close()
 
 
+def get_pickle():
+    loadfile = open("changelist", 'rb')
+    codes = pickle.load(loadfile)
+    loadfile.close()
+    return codes
+
+
+def list_splitter(codes):
+    d = {}
+    total = (len(codes) / 90).__round__()
+
+    for j in range(total):
+        temp_list = []
+        for i in range(90):
+            temp_list.append(codes[i])
+        d[j] = '+'.join(temp_list)
+
+    return d, total
+
+
 if __name__ == '__main__':
     databaseSelection = "protein"
     returnFormat = "fasta"
-    file = argv[1]
-    file_name = argv[2]
+    #file = argv[1]
+    file_name = argv[1]
 
-    url_id = get_acessionCodes(file)
+    #codes = get_acessionCodes(file)
 
-    time.sleep(3)
+    codes = get_pickle()
 
-    webEnv, query = esearch_history(url_id)
+    if len(codes) > 90:
+        d, total = list_splitter(codes)
 
-    time.sleep(3)
+        for i in range(total):
+            webEnv, query = esearch_history(d[i])
 
-    r = build_request_url(databaseSelection, returnFormat, webEnv, query)
+            time.sleep(10)
 
-    time.sleep(3)
+            r = build_request_url(databaseSelection, returnFormat, webEnv, query)
 
-    fasta_writer(r, file_name)
+            time.sleep(10)
+
+            fasta_writer(r, file_name)
+
+            print('---------' + str(i+1) + "/" + str(total) +
+                  " SLEEPING 10--------")
+            time.sleep(10)
+    else:
+        url_id = "+".join(codes)
+
+        webEnv, query = esearch_history(url_id)
+
+        time.sleep(10)
+
+        r = build_request_url(databaseSelection, returnFormat, webEnv, query)
+
+        time.sleep(10)
+
+        fasta_writer(r, file_name)
+
 
 # https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=protein&id=P87506.1,O56140.2&rettype=fasta
