@@ -4,12 +4,12 @@ from sys import argv
 
 def accesionlistmaker(file_in):
     """
-    Filter the information Get the accesioncode from the
+    Filter the information Get the accesioncode from the TSV
     """
 
     with open(file_in) as tsvfile:
         counter = 0
-        # alleen de accessiecodes
+
         accesiecode_lijst = []
         for row in tsvfile:
             counter += 1
