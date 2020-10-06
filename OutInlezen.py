@@ -91,7 +91,7 @@ def uid_gen(host, user, db, password):
 
 def databasebasefiller(host, user, db, password, table_in_list):
     """
-    table_in_list:
+    table_in_list :
     acessicode[0]
     e-value full sequence [3]
     score[4]
@@ -141,7 +141,7 @@ Database:
 
 
         # voer de command uit
-        cursor.execute(string2)
+        cursor.execute(add_entry_GO)
         conn.commit()
         # sluit de verbinding
         cursor.close()

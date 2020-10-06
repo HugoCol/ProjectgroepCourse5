@@ -78,7 +78,6 @@ def lees_inhoud(bestand):
 
 def get_page_contents(url):
     '''    Haalt de pagina op aan de hand van de meegegeven url
-
     param: de url van de site
     return: is de pagina in html code
     '''
