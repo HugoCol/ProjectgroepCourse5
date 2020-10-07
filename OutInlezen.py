@@ -29,35 +29,21 @@ import random
 import string
 
 
-def file_reader(file):
-    """
-    Filter the information in the file before adding it to database
-    """
-    filtered_output_file = []
+def fasta_to_dict(fasta):
+    d = {}
 
-    with open(file) as tsvfile:
-        counter = 0
-        # alle informatie in een tabel
-        table_in_list = []
-
-        for row in tsvfile:
-
-            counter += 1
-            # vanaf dit stuk pak je niet de headers in de lijst
-            if counter >= 4:
-                e = row.replace('-', '')
-                try:
-                    a = e.split()
-                    table_in_list.append(a)
-                    # extra filter over de accessiecodes
-
-                except IndexError:
-                    pass
-
-    return table_in_list
+    with open(fasta) as f:
+        for line in f:
+            if line.startswith('>'):
+                key = line
+                d[key] = ""
+                else:
+                d[key] = line.strip()
 
 
-def uid_gen(host, user, db, password):
+    return d
+
+def uni_accessie(host, user, db, password):
     """Functie om een uniek ID te genereren en te checken of deze
     al aanwezig is in de database
     """
@@ -89,7 +75,50 @@ def uid_gen(host, user, db, password):
         print("De benodigde module is niet gevonden")
 
 
+def file_reader(file):
+    """
+    Filter the information in the file before adding it to database
+    """
+    filtered_output_file = []
+
+    with open(file) as tsvfile:
+        counter = 0
+        # alle informatie in een tabel
+        table_in_list = []
+
+        for row in tsvfile:
+
+            counter += 1
+            # vanaf dit stuk pak je niet de headers in de lijst
+            if counter >= 4:
+                e = row.replace('-', '')
+                try:
+                    a = e.split()
+                    table_in_list.append(a)
+                    # extra filter over de accessiecodes
+
+                except IndexError:
+                    pass
+
+    return table_in_list
+
+
 def databasebasefiller(host, user, db, password, table_in_list):
+    """
+    uitdenken: Wat zijn onze inputs voor de functies?
+
+    hoe voer je die in je database?
+
+    maken:
+
+    controleer of een accessiecode uniek is voordat je deze toevoegd
+
+    maak per tabel een functie om deze te vullen, je maakt aparte
+    commando's
+
+
+    """
+
     """
     table_in_list :
     acessicode[0]
@@ -135,13 +164,11 @@ Database:
 
     conn = mysql.connector.connect(host=host, user=user, db=db,
                                    password=password)
+
     for row in table_in_list:
         cursor = conn.cursor()
 
-
-
-        # voer de command uit
-        cursor.execute(add_entry_GO)
+        cursor.execute(add_entry_GO, (row[0] row[GOterms]))
         conn.commit()
         # sluit de verbinding
         cursor.close()
@@ -160,4 +187,5 @@ if __name__ == '__main__':
 
     table_in_list = file_reader(file)
     print(table_in_list)
+
     # databasebasefiller(host, user, db, password, table_in_list)
