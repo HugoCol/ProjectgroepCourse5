@@ -35,40 +35,43 @@ def fasta_to_dict(fasta):
     with open(fasta) as f:
         for line in f:
             if line.startswith('>'):
-                key = line
+                key = line.strip()
                 d[key] = ""
-                else:
+            else:
                 d[key] = line.strip()
 
 
     return d
 
-def uni_accessie(host, user, db, password):
-    """Functie om een uniek ID te genereren en te checken of deze
-    al aanwezig is in de database
+def uni_accessie(host, user, db, password,accessiecode,tabel_naam):
+    """
+    Functie om te checken of een accessiecode al in de databaes zit
+    Je geeft de gegevens mee om aan de database te verbinden
+    Dan de accessiecode die je wilt controleren en de tabelnaam waarin
+    je wilt zoeken
+    als de accessiecode uniek is krijg je een True terug
+    als de accessiecode al in de tabel staat is het False
     """
     try:
         t = True
         while t:
-            uid = ''.join(
-                random.choice(string.ascii_uppercase + string.digits)
-                for _ in
-                range(12))
             conn = mysql.connector.connect(host=host, user=user, db=db,
                                            password=password)
             cursor = conn.cursor()
-            SQL = "select tax_id from taxonomy where tax_id like \'{}\'". \
-                format(uid)
-            cursor.execute(SQL)
-            uid_test = None
+
+            SQL = "select ID from \'{}\' where ID like " \
+                  "\'{}\'"
+
+            cursor.execute(SQL,(accessiecode,tabel_naam))
+
             for i in cursor:
-                uid_test = i[0]
-            if uid_test is not None:
-                t = True
-            else:
-                t = False
+                accode = i[0]
+                if accode is not None:
+                    t = False
+                else:
+                    t = True
             conn.close()
-            return uid
+            return t
     except ValueError:
         print('Onverwachte value')
     except ModuleNotFoundError:
@@ -116,10 +119,6 @@ def databasebasefiller(host, user, db, password, table_in_list):
     maak per tabel een functie om deze te vullen, je maakt aparte
     commando's
 
-
-    """
-
-    """
     table_in_list :
     acessicode[0]
     e-value full sequence [3]
@@ -185,7 +184,5 @@ if __name__ == '__main__':
     password = "yGVBJW3rniUd8uw1"
     # aanroep
 
-    table_in_list = file_reader(file)
-    print(table_in_list)
 
     # databasebasefiller(host, user, db, password, table_in_list)
