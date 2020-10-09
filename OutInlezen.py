@@ -43,7 +43,26 @@ def fasta_to_dict(fasta):
 
     return d
 
-def uni_accessie(host, user, db, password,accessiecode,tabel_naam):
+
+def Seq_table(login, d):
+    add_entry_sequentie = ('INSERT INTO Sequentie '
+                           '(`ID`, `Seq`, `Accessiecode`)'
+                           ' VALUES(%s,%s,%s)')
+
+    conn = mysql.connector.connect(login)
+    cursor = conn.cursor()
+    for i in d.keys():
+        if uni_accessie(login, i, tabel_naam="Sequentie"):
+            cursor.execute(add_entry_sequentie, (i,d[i], i))
+            conn.commit()
+        else:
+            str("skip")
+    conn.close()
+
+    return
+
+
+def uni_accessie(login,accessiecode,tabel_naam):
     """
     Functie om te checken of een accessiecode al in de databaes zit
     Je geeft de gegevens mee om aan de database te verbinden
@@ -55,19 +74,20 @@ def uni_accessie(host, user, db, password,accessiecode,tabel_naam):
     try:
         t = True
         while t:
-            conn = mysql.connector.connect(host=host, user=user, db=db,
-                                           password=password)
+            conn = mysql.connector.connect(login)
             cursor = conn.cursor()
 
-            SQL = "select ID from \'{}\' where ID like " \
-                  "\'{}\'"
+            SQL = "select ID from " + tabel_naam + "where ID like " + accessiecode
 
             cursor.execute(SQL,(accessiecode,tabel_naam))
+            j = cursor.fetchall()
 
-            for i in cursor:
+            for i in j:
                 accode = i[0]
                 if accode is not None:
                     t = False
+                    conn.close()
+                    return t
                 else:
                     t = True
             conn.close()
@@ -106,7 +126,7 @@ def file_reader(file):
     return table_in_list
 
 
-def databasebasefiller(host, user, db, password, table_in_list):
+def databasebasefiller(login,table_in_list):
     """
     uitdenken: Wat zijn onze inputs voor de functies?
 
@@ -161,8 +181,7 @@ Database:
                     '(`ID`, `GO_terms`)'
                     'VALUES(%s,%s)')
 
-    conn = mysql.connector.connect(host=host, user=user, db=db,
-                                   password=password)
+    conn = mysql.connector.connect(login)
 
     for row in table_in_list:
         cursor = conn.cursor()
@@ -178,10 +197,9 @@ if __name__ == '__main__':
     file = 'TBL0'
 
     # database inlog
-    host = "hydron.io"
-    user = "course5"
-    db = "course5"
-    password = "yGVBJW3rniUd8uw1"
+
+   login = {"host=":"hydron.io", "user=":"course5", "db=":"course5",
+    "password=":"yGVBJW3rniUd8uw1"}
     # aanroep
 
 
