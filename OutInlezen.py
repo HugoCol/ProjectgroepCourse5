@@ -118,19 +118,20 @@ Database:
     """
     conn = mysql.connector.connect(host=host, user=user, db=db,
                                    password=password)
+    cursor = conn.cursor()
     for row in table_in_list:
-        cursor = conn.cursor()
+        unique_id = uid_gen(host,user,db,password)
 
         # zet hier je Mysql command
-        string2 = f"insert into lineage (id, name) values " \
-                  f"('{teller1}', " \
+        command = f"insert into Sequentie (ID,) values " \
+                  f"('{unique_id}', " \
                   f"'{datadic[i][11][countlin]}')"
 
         # voer de command uit
-        cursor.execute(string2)
+        cursor.execute(command)
         conn.commit()
         # sluit de verbinding
-        cursor.close()
+    cursor.close()
 
 
 if __name__ == '__main__':

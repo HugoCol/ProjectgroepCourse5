@@ -33,6 +33,8 @@ if __name__ == '__main__':
     """
     This function gets the accesioncodes from a muscle output
     terminal command: python3 GetAccesioncode.py file_in file_out.txt
+    De argumenten die je meegeeft worden gebruikt als files name
+    misschien niet helemaal ideaal omdat dit ook filepaths zijn
     """
 
     file_in = argv[1]
