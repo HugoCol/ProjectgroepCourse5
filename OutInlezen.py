@@ -29,6 +29,75 @@ import random
 import string
 
 
+def fasta_to_dict(fasta):
+    d = {}
+
+    with open(fasta) as f:
+        for line in f:
+            if line.startswith('>'):
+                key = line.strip()
+                d[key] = ""
+            else:
+                d[key] = line.strip()
+
+
+    return d
+
+
+def Seq_table(login, d):
+    add_entry_sequentie = ('INSERT INTO Sequentie '
+                           '(`ID`, `Seq`, `Accessiecode`)'
+                           ' VALUES(%s,%s,%s)')
+
+    conn = mysql.connector.connect(login)
+    cursor = conn.cursor()
+    for i in d.keys():
+        if uni_accessie(login, i, tabel_naam="Sequentie"):
+            cursor.execute(add_entry_sequentie, (i,d[i], i))
+            conn.commit()
+        else:
+            str("skip")
+    conn.close()
+
+    return
+
+
+def uni_accessie(login,accessiecode,tabel_naam):
+    """
+    Functie om te checken of een accessiecode al in de databaes zit
+    Je geeft de gegevens mee om aan de database te verbinden
+    Dan de accessiecode die je wilt controleren en de tabelnaam waarin
+    je wilt zoeken
+    als de accessiecode uniek is krijg je een True terug
+    als de accessiecode al in de tabel staat is het False
+    """
+    try:
+        t = True
+        while t:
+            conn = mysql.connector.connect(login)
+            cursor = conn.cursor()
+
+            SQL = "select ID from " + tabel_naam + "where ID like " + accessiecode
+
+            cursor.execute(SQL,(accessiecode,tabel_naam))
+            j = cursor.fetchall()
+
+            for i in j:
+                accode = i[0]
+                if accode is not None:
+                    t = False
+                    conn.close()
+                    return t
+                else:
+                    t = True
+            conn.close()
+            return t
+    except ValueError:
+        print('Onverwachte value')
+    except ModuleNotFoundError:
+        print("De benodigde module is niet gevonden")
+
+
 def file_reader(file):
     """
     Filter the information in the file before adding it to database
@@ -57,41 +126,20 @@ def file_reader(file):
     return table_in_list
 
 
-def uid_gen(host, user, db, password):
-    """Functie om een uniek ID te genereren en te checken of deze
-    al aanwezig is in de database
+def databasebasefiller(login,table_in_list):
     """
-    try:
-        t = True
-        while t:
-            uid = ''.join(
-                random.choice(string.ascii_uppercase + string.digits)
-                for _ in
-                range(12))
-            conn = mysql.connector.connect(host=host, user=user, db=db,
-                                           password=password)
-            cursor = conn.cursor()
-            SQL = "select tax_id from taxonomy where tax_id like \'{}\'". \
-                format(uid)
-            cursor.execute(SQL)
-            uid_test = None
-            for i in cursor:
-                uid_test = i[0]
-            if uid_test is not None:
-                t = True
-            else:
-                t = False
-            conn.close()
-            return uid
-    except ValueError:
-        print('Onverwachte value')
-    except ModuleNotFoundError:
-        print("De benodigde module is niet gevonden")
+    uitdenken: Wat zijn onze inputs voor de functies?
 
+    hoe voer je die in je database?
 
-def databasebasefiller(host, user, db, password, table_in_list):
-    """
-    table_in_list:
+    maken:
+
+    controleer of een accessiecode uniek is voordat je deze toevoegd
+
+    maak per tabel een functie om deze te vullen, je maakt aparte
+    commando's
+
+    table_in_list :
     acessicode[0]
     e-value full sequence [3]
     score[4]
@@ -116,22 +164,32 @@ Database:
         - ID PK
         - Naam (webscraper)
     """
-    conn = mysql.connector.connect(host=host, user=user, db=db,
-                                   password=password)
-    cursor = conn.cursor()
+
+    add_entry_sequentie = ('INSERT INTO Sequentie '
+                           '(`ID`, `Seq`, `Accessiecode`)'
+                           ' VALUES(%s,%s,%s)')
+
+    add_entry_taxonomy = ('INSERT INTO Taxonomy '
+                          '(`ID`, `Naam` )'
+                          'VALUES(%s,%s)')
+
+    add_entry_Alignments = ('INSERT INTO Alignments '
+                            '(`ID`, `Iteratie`, `Alignment_file`)'
+                            'VALUES(%s,%s,%s)')
+
+    add_entry_GO = ('INSERT INTO GO'
+                    '(`ID`, `GO_terms`)'
+                    'VALUES(%s,%s)')
+
+    conn = mysql.connector.connect(login)
+
     for row in table_in_list:
-        unique_id = uid_gen(host,user,db,password)
+        cursor = conn.cursor()
 
-        # zet hier je Mysql command
-        command = f"insert into Sequentie (ID,) values " \
-                  f"('{unique_id}', " \
-                  f"'{datadic[i][11][countlin]}')"
-
-        # voer de command uit
-        cursor.execute(command)
+        cursor.execute(add_entry_GO, (row[0] row[GOterms]))
         conn.commit()
         # sluit de verbinding
-    cursor.close()
+        cursor.close()
 
 
 if __name__ == '__main__':
@@ -139,12 +197,10 @@ if __name__ == '__main__':
     file = 'TBL0'
 
     # database inlog
-    host = "hydron.io"
-    user = "course5"
-    db = "course5"
-    password = "yGVBJW3rniUd8uw1"
+
+   login = {"host=":"hydron.io", "user=":"course5", "db=":"course5",
+    "password=":"yGVBJW3rniUd8uw1"}
     # aanroep
 
-    table_in_list = file_reader(file)
-    print(table_in_list)
+
     # databasebasefiller(host, user, db, password, table_in_list)
