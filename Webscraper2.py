@@ -14,23 +14,38 @@ def main():
     headers, sequences = lees_inhoud(bestandsnaam)
     megaItemList = []
     file = open("testoutput.txt", "a+")
-
+    print(headers)
     megatext = ""
 
     for item in headers:
+        print(item)
         item = item.replace(">", "").split("_")
         ##print(item[0])
         url = "https://www.uniprot.org/uniprot/" + item[0]
         soup = get_page_contents(url)
-        items, filetext = scrapen(url, soup, item)
-        megaItemList.append(items)
-        megatext += filetext + "\n"
-
-    try:
-        file.write(str(megatext) + "\n")
-        file.close()
-    except:
-        pass
+        item = ''.join(item)
+        try:
+            molfunctions, biofunctions = scrapen(url, soup, item)
+        except:
+            molfunctions = []
+            biofunctions = []
+            file.write("header: " + item + "\n"
+                                           "for this protein no GO terms were recovered" + '\n')
+            pass
+        print(molfunctions, biofunctions)
+        file.write("accession code:" + item + "\n")
+        molfunctions = ','.join(molfunctions)
+        biofunctions = ','.join(biofunctions)
+        try:
+            file.write("molecular function:" + molfunctions + "\n")
+        except:
+            file.write("molecular function: none" + "\n")
+        try:
+            file.write("biological function:" + biofunctions + "\n")
+        except:
+            file.write("biological function: none" + '\n')
+        file.write("\n")
+    file.close()
 
 
 def bestand_inlezen():
@@ -90,12 +105,15 @@ def scrapen(url, soup, header):
     param: de url van de site, en de htmnl code
     return: de go-termen van het meegegeven eiwit
     '''
-    templist = []
+    biofunctions = []
+    molfunctions = []
+
     functie = soup.find(class_="noNumbering molecular_function").findAll(
         'a')  # , onclick_="window.ga('UniProt-Entry-View', 'click', 'Display-GO-Term')")
-    print(header)
+    print("the molecular functions of {} include:".format(header))
     for i in functie:
         print(i.text)
+        molfunctions.append(i.text)
     #        if not temp[0].isupper():
     #           ##print(i.text)
     #          templist.append(i.text)
@@ -103,39 +121,12 @@ def scrapen(url, soup, header):
     functie = soup.find(class_="noNumbering biological_process").findAll(
         'a')  # , onclick_="window.ga('UniProt-Entry-View', 'click', 'Display-GO-Term')")
     filetext = ""
+    print("the biological functions of {} include:".format(header))
     for i in functie:
         print(i.text)
-    #        if not temp[0].isupper():
-    #           ##print(i.text)
-    #          filetext += str(i.text) + "\n"
-    #   templist.append(i.text)
+        biofunctions.append(i.text)
 
-    # recommended_name = soup.find(property="name", class_="recommended-name").find()
-    # gene_name = soup.find(class_="noBorders").find("a")
-    # name = soup.find(class_="name").findAll("a")
-    # dbtabel = soup.find(href="/taxonomy/{}").format(header).findAll("a")
-    # print(recommended_name.children)
-    # print(gene_name.text)
-    # print(name.text)
-    # print(dbtabel)
-    # for i in dbtabel:
-    #   print(i.text)
-    #  filetext += str(i.text) + "\n"
-    # page = requests.get(url, headers={"Accept-Language": "en-US"})
-    table = soup.findAll(class_="databaseTable")
-    table = table[1]
-    # tree = html.fromstring(page)
-    # dbtabel = tree.xpath("//table[@class='databaseTable']/text()")
-    counter = 0
-    for line in table:
-        if counter == 0:
-            line = line.strip("")
-            print(line)
-            counter = + 1
-        else:
-            pass
-
-    return templist, filetext
+    return molfunctions, biofunctions
 
 
 main()
