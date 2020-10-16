@@ -1,26 +1,20 @@
 """
 open file met een gui window
 maak filters met de GUI?
-
 als je de sha2 error krijgt
 terminal in pycharm -> pip3 install mysql-connector-python
-
 accession', 'query', 'name', 'accession', 'Evalue', 'score', 'bias',
 'Evalue', 'score', 'bias', 'exp', 'reg', 'clu', 'ov', 'env', 'dom',
  'rep', 'inc', 'description', 'of', 'target'
-
 acessicode[0]
 e-value full sequence [3]
 score[4]
 bias[5]
-
 beste domein e-value [6]
 score [7]
 bias[8]
-
 pfam hmm > X aantal iteraties van (hmmsearch > accessie > sequentie
 opvragen > muscle > alignment > hmmsearch) > webscraper > database
-
 """
 
 import mysql
@@ -38,168 +32,85 @@ def fasta_to_dict(fasta):
                 key = line.strip()
                 d[key] = ""
             else:
-                d[key] = line.strip()
-
+                d[key] += line.strip()
 
     return d
 
 
-def Seq_table(login, d):
-    add_entry_sequentie = ('INSERT INTO Sequentie '
-                           '(`ID`, `Seq`, `Accessiecode`)'
-                           ' VALUES(%s,%s,%s)')
+def seq_table(d):
+    import re
+    regex = "(?<=\().+?(?=\))"
+    add_entry_sequentie = ('INSERT INTO Sequentie_muscle'
+                           '(`ID`, `Seq`, `virus_info`, `header`)'
+                           ' VALUES(%s,%s,%s,%s)')
 
-    conn = mysql.connector.connect(login)
-    cursor = conn.cursor()
-    for i in d.keys():
-        if uni_accessie(login, i, tabel_naam="Sequentie"):
-            cursor.execute(add_entry_sequentie, (i,d[i], i))
-            conn.commit()
+    conn = mysql.connector.connect(host="hydron.io", user="course5", db="course5",
+             password="yGVBJW3rniUd8uw1")
+    cursor = conn.cursor(buffered=True)
+    cursor2 = conn.cursor(buffered=True)
+
+    counter = 0
+    nietdup = 0
+    for k in d.keys():
+        header = k
+        virus_info_start = re.findall(regex, k)
+        # print(virus_info_start)
+        if virus_info_start:
+            virus_info = virus_info_start[0].replace('(', '| ')
+            virus_info = str(virus_info)
+        elif not virus_info_start:
+            virus_info = str("niet gevonden met regex")
+        #print(virus_info)
+        line = k.split('/')
+        line = line[0].replace('>', '')
+        code = line
+        SQL = "select ID from Sequentie_muscle where ID like \'{}\'".format(code)
+        print(SQL)
+        cursor.execute(SQL)
+        j = cursor.fetchall()
+        if j:
+            print(j)
+            counter+=1
+            print(header)
+            print(virus_info)
         else:
-            str("skip")
+            nietdup +=1
+            print(virus_info)
+            print(header)
+            cursor2.execute(add_entry_sequentie, (line, d[k], virus_info, header))
+            conn.commit()
+    print(counter)
+    print(len(d.keys()))
+    print(len(d.values()))
     conn.close()
 
     return
 
-
-def uni_accessie(login,accessiecode,tabel_naam):
-    """
-    Functie om te checken of een accessiecode al in de databaes zit
-    Je geeft de gegevens mee om aan de database te verbinden
-    Dan de accessiecode die je wilt controleren en de tabelnaam waarin
-    je wilt zoeken
-    als de accessiecode uniek is krijg je een True terug
-    als de accessiecode al in de tabel staat is het False
-    """
-    try:
-        t = True
-        while t:
-            conn = mysql.connector.connect(login)
-            cursor = conn.cursor()
-
-            SQL = "select ID from " + tabel_naam + "where ID like " + accessiecode
-
-            cursor.execute(SQL,(accessiecode,tabel_naam))
-            j = cursor.fetchall()
-
-            for i in j:
-                accode = i[0]
-                if accode is not None:
-                    t = False
-                    conn.close()
-                    return t
-                else:
-                    t = True
-            conn.close()
-            return t
-    except ValueError:
-        print('Onverwachte value')
-    except ModuleNotFoundError:
-        print("De benodigde module is niet gevonden")
-
-
-def file_reader(file):
-    """
-    Filter the information in the file before adding it to database
-    """
-    filtered_output_file = []
-
-    with open(file) as tsvfile:
-        counter = 0
-        # alle informatie in een tabel
-        table_in_list = []
-
-        for row in tsvfile:
-
-            counter += 1
-            # vanaf dit stuk pak je niet de headers in de lijst
-            if counter >= 4:
-                e = row.replace('-', '')
-                try:
-                    a = e.split()
-                    table_in_list.append(a)
-                    # extra filter over de accessiecodes
-
-                except IndexError:
-                    pass
-
-    return table_in_list
-
-
-def databasebasefiller(login,table_in_list):
-    """
-    uitdenken: Wat zijn onze inputs voor de functies?
-
-    hoe voer je die in je database?
-
-    maken:
-
-    controleer of een accessiecode uniek is voordat je deze toevoegd
-
-    maak per tabel een functie om deze te vullen, je maakt aparte
-    commando's
-
-    table_in_list :
-    acessicode[0]
-    e-value full sequence [3]
-    score[4]
-    bias[5]
-    beste domein e-value [6]
-    score [7]
-    bias[8]
-
-Database:
-    Alignments:
-        - ID PK gegenereerd met uid_gen functie
-        - Iteratie# (teller)
-        - Alignment_file (uit muscle)
-    GO
-        - ID
-        - Go_terms (webscraper)
-    Sequentie (komt uit converter.py)
-        - ID PK
-        - Seq
-        - Accessiecode (converter.py)
-    Taxonomy
-        - ID PK
-        - Naam (webscraper)
-    """
-
-    add_entry_sequentie = ('INSERT INTO Sequentie '
-                           '(`ID`, `Seq`, `Accessiecode`)'
-                           ' VALUES(%s,%s,%s)')
-
-    add_entry_taxonomy = ('INSERT INTO Taxonomy '
-                          '(`ID`, `Naam` )'
-                          'VALUES(%s,%s)')
-
-    add_entry_Alignments = ('INSERT INTO Alignments '
-                            '(`ID`, `Iteratie`, `Alignment_file`)'
-                            'VALUES(%s,%s,%s)')
-
-    add_entry_GO = ('INSERT INTO GO'
-                    '(`ID`, `GO_terms`)'
-                    'VALUES(%s,%s)')
-
-    conn = mysql.connector.connect(login)
-
-    for row in table_in_list:
-        cursor = conn.cursor()
-
-        cursor.execute(add_entry_GO, (row[0] row[GOterms]))
-        conn.commit()
-        # sluit de verbinding
-        cursor.close()
+def open_webscarper(web):
+    dic = {}
+    go_terms = []
+    with open(web) as file:
+        for line in file:
+            if line.startswith('accession' or 'header'):
+                line = line.split(':')
+                key = line[1].strip()
+                
+    return
 
 
 if __name__ == '__main__':
     # /home/hugo/Documents/Tutor/Tutorperiode5/testfiles
     file = 'TBL0'
-
+    login = {"host=":"hydron.io", "user=":"course5", "db=":"course5",
+             "password=":"yGVBJW3rniUd8uw1"}
+    fasta = 'Mseqs.fa'
+    d = fasta_to_dict(fasta)
+    # seq_table(d)
+    web = 'web_output.txt'
+    open_webscarper(web)
     # database inlog
 
-   login = {"host=":"hydron.io", "user=":"course5", "db=":"course5",
-    "password=":"yGVBJW3rniUd8uw1"}
+
     # aanroep
 
 
