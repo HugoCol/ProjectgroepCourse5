@@ -49,18 +49,16 @@ def seq_table(d):
     cursor = conn.cursor(buffered=True)
     cursor2 = conn.cursor(buffered=True)
 
-    counter = 0
-    nietdup = 0
     for k in d.keys():
         header = k
         virus_info_start = re.findall(regex, k)
-        # print(virus_info_start)
+
         if virus_info_start:
             virus_info = virus_info_start[0].replace('(', '| ')
             virus_info = str(virus_info)
         elif not virus_info_start:
             virus_info = str("niet gevonden met regex")
-        #print(virus_info)
+
         line = k.split('/')
         line = line[0].replace('>', '')
         code = line
@@ -69,32 +67,56 @@ def seq_table(d):
         cursor.execute(SQL)
         j = cursor.fetchall()
         if j:
-            print(j)
-            counter+=1
-            print(header)
-            print(virus_info)
+            str('skip')
         else:
-            nietdup +=1
-            print(virus_info)
-            print(header)
             cursor2.execute(add_entry_sequentie, (line, d[k], virus_info, header))
             conn.commit()
-    print(counter)
-    print(len(d.keys()))
-    print(len(d.values()))
+
     conn.close()
 
     return
 
 def open_webscarper(web):
-    dic = {}
-    go_terms = []
+    conn = mysql.connector.connect(host="hydron.io", user="course5", db="course5",
+             password="yGVBJW3rniUd8uw1")
+    cursor = conn.cursor(buffered=True)
+    accesion_codes = []
+    molecular = []
+    biological = []
+
+    add_entry_go = ('INSERT INTO GO'
+                    '(`ID`, `Biological_function`, `Molecular_function`)'
+                    ' VALUES(%s,%s,%s)')
+
     with open(web) as file:
         for line in file:
-            if line.startswith('accession' or 'header'):
+            if line.startswith('accession'):
                 line = line.split(':')
-                key = line[1].strip()
-                
+                accesion = line[1].strip()
+                accesion_codes.append(accesion)
+            elif line.startswith('molecular'):
+                line = line.split(':')
+                go = line[1].strip()
+                if go:
+                    mol_term = go
+                if not go:
+                    mol_term = "Niet gevonden"
+                molecular.append(mol_term)
+            elif line.startswith('biological'):
+                line = line.split(':')
+                go = line[1].strip()
+                if go:
+                    bio_term = go
+                if not go:
+                    bio_term = "Niet gevonden"
+                biological.append(bio_term)
+
+    for i in range(len(accesion_codes)):
+        cursor.execute(add_entry_go, (accesion_codes[i], biological[i],
+                                      molecular[i]))
+        conn.commit()
+
+    conn.close()
     return
 
 
