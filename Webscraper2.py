@@ -8,7 +8,8 @@ def main():
     ontvangt de lijst met headers die aan de url worden meegegeven.
     Ook opent deze functie het resultaten bestand en
     schrijft de lijsten met resultaten weg, een lijst met headers en
-    een lijst met de go-termen die hier bij horen.
+    een lijst met de go-termen die hier bij horen. 
+    Deze worden weggeschreven in een tekstbestand
     """
     bestandsnaam = bestand_inlezen()
     headers, sequences = lees_inhoud(bestandsnaam)
