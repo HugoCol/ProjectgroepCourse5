@@ -24,6 +24,11 @@ import string
 
 
 def fasta_to_dict(fasta):
+""" verwerkt het fasta bestand van de pipeline naar een dictonary
+input : fasta, dit is een file bestand
+output : d, dit is een dictonary met als key de header
+         en sequentie also value
+"""
     d = {}
 
     with open(fasta) as f:
@@ -38,8 +43,15 @@ def fasta_to_dict(fasta):
 
 
 def seq_table(d):
+""" voegt alle informatie die nuttig is toe aan Sequentie(_muscle)
+input : d, de dictonary met alle headers en sequenties uit het fasta bestand
+output: 
+"""
     import re
     regex = "(?<=\().+?(?=\))"
+  #de tabel kan Sequentie of Sequentie_muscle zijn
+  # want we hebben twee verschillende tabellen om muscle en custalO 
+  # te vergelijken 
     add_entry_sequentie = ('INSERT INTO Sequentie_muscle'
                            '(`ID`, `Seq`, `virus_info`, `header`)'
                            ' VALUES(%s,%s,%s,%s)')
@@ -49,6 +61,9 @@ def seq_table(d):
     cursor = conn.cursor(buffered=True)
     cursor2 = conn.cursor(buffered=True)
 
+# een loop die over alle headers van het meegeven fasta bestand gaat
+# en daarna alle informatie die we willen vinden in verschillende 
+# variable zet
     for k in d.keys():
         header = k
         virus_info_start = re.findall(regex, k)
@@ -62,6 +77,11 @@ def seq_table(d):
         line = k.split('/')
         line = line[0].replace('>', '')
         code = line
+  # de tabel kan Sequentie of Sequentie_muscle zijn
+  # want we hebben twee verschillende tabellen om muscle en custalO 
+  # te vergelijken 
+  # dit deel is om te kijken of de accessiecode niet al een keer voorkomt
+  # dit was vooral gemaakt om duplicaten niet mogelijk te maken
         SQL = "select ID from Sequentie_muscle where ID like \'{}\'".format(code)
         print(SQL)
         cursor.execute(SQL)
@@ -77,6 +97,10 @@ def seq_table(d):
     return
 
 def open_webscarper(web):
+""" Voegt alle informatie gevonden bij de webscraper toe aan de GO tabel
+input: web, een txt bestand gemaakt door de web scraper
+output: 
+"""
     conn = mysql.connector.connect(host="hydron.io", user="course5", db="course5",
              password="yGVBJW3rniUd8uw1")
     cursor = conn.cursor(buffered=True)
@@ -87,7 +111,9 @@ def open_webscarper(web):
     add_entry_go = ('INSERT INTO GO'
                     '(`ID`, `Biological_function`, `Molecular_function`)'
                     ' VALUES(%s,%s,%s)')
-
+#opened het bestand en zoekt naar de accessiecode, molecular en biological function
+#en voegt dit toe aan de GO tabel en 
+#wanneer het niet gevonden wordt voegt het niet gevonden toe
     with open(web) as file:
         for line in file:
             if line.startswith('accession'):
@@ -127,13 +153,7 @@ if __name__ == '__main__':
              "password=":"yGVBJW3rniUd8uw1"}
     fasta = 'Mseqs.fa'
     d = fasta_to_dict(fasta)
-    # seq_table(d)
+    seq_table(d)
     web = 'web_output.txt'
     open_webscarper(web)
-    # database inlog
-
-
-    # aanroep
-
-
-    # databasebasefiller(host, user, db, password, table_in_list)
+ 
